@@ -3,7 +3,7 @@ import nltk
 import codecs
 from nltk import FreqDist, ConditionalFreqDist
 from lputils import isstoptoken_en, isstoptoken_ja
-from lputils.CaptalNormalizer import CaptalNormalizer
+from lputils.CapsNormalizer import CapsNormalizer
 
 
 def toklen(t):
@@ -17,9 +17,6 @@ def tokstr(t):
 maxN = 5
 filenameE = r'D:\DATA\PROJ\NLTK\160420_term\0.dlp.trn.en'
 filenameJ = r'D:\DATA\PROJ\NLTK\160420_term\0.dlp.trn.ja'
-capsnormE = r'D:\DATA\PROJ\NLTK\160420_term\capsnorm.en'
-
-cn = CaptalNormalizer().load(capsnormE)
 
 f = codecs.open(filenameE, 'r', 'utf-8')
 tokE = [nltk.word_tokenize(l.strip()) for l in f]
@@ -35,7 +32,7 @@ eo = FreqDist()
 
 ii = 0
 while ii < min(len(tokE), 4000):
-    tE = [cn.normalize(t) for t in tokE[ii]]
+    tE = [t.lower() for t in tokE[ii]]
     tJ = tokJ[ii]
     pE = {1: set([t for t in tE if not isstoptoken_en(t)])}
     pJ = {1: set([t for t in tJ if not isstoptoken_ja(t)])}
