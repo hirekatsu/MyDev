@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
-import nltk
-import codecs
-from nltk import FreqDist, ConditionalFreqDist
-from lputils import isstoptoken_en, isstoptoken_ja
-from lputils.CapsNormalizer import CapsNormalizer
-from lputils.BiCorpus import BiCorpus
-import MeCab
+# import nltk
+# import codecs
+# from nltk import FreqDist, ConditionalFreqDist
+# from lputils import isstoptoken_en, isstoptoken_ja
+# from lputils.CapsNormalizer import CapsNormalizer
+# from lputils.BiCorpus import BiCorpus
+# import MeCab
+import subprocess
 
-def myprogress(x):
-    print '.',
-cn = CapsNormalizer().read(r'D:\DATA\PROJ\NLTK\160420_term\0.dlp.trn.en', 'utf-8', progresscallback=myprogress)
-for t in cn._capsdict[0:30]:
-    print t
-cn.save(r'D:\DATA\PROJ\NLTK\160420_term\0.normalize.en')
-cn.load(r'D:\DATA\PROJ\NLTK\160420_term\0.normalize.en')
-print cn.normalize(u'Size filters are only available for files on file shares , Endpoint files , Lotus Notes documents , SharePoint items , and Exchange items .'.split())
+csvfilename = r'/Users/kiyoshi_izumi/Desktop/DATA/DEV/MyGitHub/MyDev/lexicord/mydic.csv'
+dicfilename = r'/Users/kiyoshi_izumi/Desktop/DATA/DEV/MyGitHub/MyDev/lexicord/mydic2.dic'
+indexcommand = r'/usr/local/libexec/mecab/mecab-dict-index'
 
-
+shellcommand = u'{0} -d /usr/local/lib/mecab/dic/ipadic -u {1} -f utf-8 -t utf-8 {2}'.format(indexcommand,
+    dicfilename, csvfilename)
+print shellcommand
+p = subprocess.Popen(shellcommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+comout, comerr = p.communicate()
+print comout
+print comerr
