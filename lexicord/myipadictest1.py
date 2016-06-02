@@ -2,51 +2,60 @@
 import subprocess
 import codecs
 import re
-from lputils.BiText import BiText
+from lputils.segmentlist import BilingualSegmentList
 import MeCab
 
-tmxfilename = r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/vasont.tmx'
-csvfilename = r'/Users/kiyoshi_izumi/Desktop/DATA/DEV/MyGitHub/MyDev/lexicord/mydic.csv'
-dicfilename = r'/Users/kiyoshi_izumi/Desktop/DATA/DEV/MyGitHub/MyDev/lexicord/mydic.dic'
-indexcommand = r'/usr/local/libexec/mecab/mecab-dict-index'
+tmx_filename = r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/samples/SEP.tmx'
+tmx_encoding = 'utf-16'
+csv_filename = r'/Users/kiyoshi_izumi/Desktop/DATA/DEV/MyGitHub/MyDev/lexicord/mydic.csv'
+dic_filename = r'/Users/kiyoshi_izumi/Desktop/DATA/DEV/MyGitHub/MyDev/lexicord/mydic.dic'
+index_command = r'/usr/local/libexec/mecab/mecab-dict-index'
+exclude_ascii = True
 
-def myprogress(x):
-    print '\r{0}% '.format(int(x * 100)), '*' * int(x * 25),
+bsl = BilingualSegmentList().read(format='tmx', name=tmx_filename, encoding='utf-16', verbose=True)
+bsl.trim()
+bsl.duplicate(where='both', uniq=True)
 
-bt = BiText().readtmx(tmxfilename, encoding='utf-8', progresscallback=myprogress).trim()
-bt.duplicate(uniq=True)
-print '\r'
+with codecs.open(csv_filename, 'r', encoding='utf-8') as f:
+    entries = [line.strip().split(',') for line in f]
+user_words = {items[0]: items for items in entries}
 
-with codecs.open(csvfilename, 'r', encoding='utf-8') as f:
-    keywords = [line.strip() for line in f]
-existing = [line.split(',', 1)[0] for line in keywords]
+tagger = MeCab.Tagger('-Owakati -u %s' % dic_filename)
+
+def update_userdic():
+    global user_words
+    with codecs.open(csv_filename, 'w', encoding='utf-8') as f:
+        for word in sorted(user_words.keys()):
+            f.write(','.join(user_words[word]) + u'\n')
+    p = subprocess.Popen(u'{0} -d /usr/local/lib/mecab/dic/ipadic -u {1} -f utf-8 -t utf-8 {2}'.format(
+        index_command, dic_filename, csv_filename), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    comout, comerr = p.communicate()
+    print comout
+    print comerr
+    return MeCab.Tagger('-Owakati -u %s' % dic_filename)
+
+
+def uinput(prompt):
+    return unicode(raw_input(prompt).strip(), 'utf-8')
+
 
 while True:
     loop = None
-    mt = MeCab.Tagger('-Owakati -u %s' % dicfilename)
     tokens = []
-    for i, (_, t) in enumerate(bt):
-        try:
-            v = t.encode('utf-8')
-        except Exception as e:
-            continue
-        x = mt.parse(v)
-        tokens += unicode(x, 'utf-8').split()
+    for i, (_, t) in enumerate(bsl):
+        tokens += unicode(tagger.parse(t.encode('utf-8')), 'utf-8').split()
     longest = sorted(set(tokens), key=lambda x: len(x), reverse=True)
+    if exclude_ascii:
+        longest = [w for w in longest if not all(ord(c) < 256 for c in w)]
 
-    addition = []
-    postcheck = []
     ix = 0
     while True:
         for i, t in enumerate(longest[ix:ix+20]):
             print u'{0: >3}: {1} ({2})'.format(i + ix, t, len(t))
-        userinput = raw_input(u'action (l, N, g, q)? ').strip()
+        userinput = raw_input(u'action (l|N|q)? ').strip()
         if userinput == u'l':
             ix += 20
             continue
-        if userinput == u'g':
-            loop = 'continue'
-            break
         if userinput == u'q':
             loop = 'break'
             break
@@ -54,53 +63,58 @@ while True:
             print u'UNKNOWN ACTION'
             continue
         i = int(userinput)
+        ix = int(i / 20) * 20
         t = longest[i]
+        pending_words = {}
         print u'customizing for {0: >3}: {1} ({2})'.format(i, t, len(t))
         while True:
-            userinput = raw_input(u'action (N:N, n, g, q)? ').strip()
+            userinput = uinput(u'action (e |N:N|d|n|v|q)? ')
             if userinput == u'n':
                 break
-            if userinput == u'g':
-                loop = 'continue'
+            if userinput == u'v':
+                loop = 'verify'
                 break
             if userinput == u'q':
                 loop = 'break'
                 break
-            if not re.match(r'^\d+:\d+$', userinput):
+            if userinput == u'd':
+                print u', '.join(sorted(user_words.keys()))
+                continue
+            if re.match(ur'^e [^\s,]', userinput):
+                _, items = userinput.split(' ', 1)
+                items = [item.strip() for item in items.split(',', 3)]
+                items = (items + ['', '', ''])[:4]
+                if raw_input(u'adding {0} (y|n)? '.format(items[0])).strip() != u'y':
+                    continue
+                word = items[0]
+                word_props = map(lambda x: x if x else word, items[1:])
+            elif re.match(ur'^\d+:\d+$', userinput):
+                (start, end) = userinput.split(':')
+                word = t[int(start):int(end)]
+                if raw_input(u'adding {0} (y|n)? '.format(word)).strip() != u'y':
+                    continue
+                word_props = [word, word, word]
+            else:
                 print u'UNKNOWN ACTION'
                 continue
-            (start, end) = userinput.split(':')
-            keyword = t[int(start):int(end)]
-            userinput = raw_input(u'append {0} (y, n)? '.format(keyword)).strip()
-            if userinput == u'y':
-                addition.append(keyword)
-                postcheck.append(t)
-        if loop in ('continue', 'break'):
+            pending_words[word] = word_props
+        if loop == 'break':
+            break
+        if loop == 'verify' and pending_words:
+            for word in pending_words:
+                if word not in user_words:
+                    user_words[word] = [word, u'', u'', u'1', u'名詞', u'一般', u'*', u'*', u'*', u'*',
+                                        word_props[0], word_props[1], word_props[2]]
+            tagger = update_userdic()
+            print u'verifying... {0}'.format(unicode(tagger.parse(t.encode('utf-8')), 'utf-8'))
+            if raw_input(u'the result is okay (y|n)? ').strip() != u'y':
+                for word in pending_words:
+                    del user_words[word]
+                tagger = update_userdic()
+                print u'the change(s) discarded'
             break
     if loop == 'break':
         break
 
-    for k in sorted(addition):
-        print k
-    ucom = raw_input(u'append to dic (y, n)? ').strip()
-    if ucom == u'y':
-        keywords += [u'{0},,,1,名詞,一般,*,*,*,*,{0},{0},'.format(k) for k in addition if k not in existing]
-        keywords.sort()
-        with codecs.open(csvfilename, 'w', encoding='utf-8') as f:
-            for line in keywords:
-                f.write(line + u'\n')
-        p = subprocess.Popen(u'{0} -d /usr/local/lib/mecab/dic/ipadic -u {1} -f utf-8 -t utf-8 {2}'.format(
-            indexcommand, dicfilename, csvfilename), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        comout, comerr = p.communicate()
-        print comout
-        print comerr
-
-        mt = MeCab.Tagger('-Owakati -u %s' % dicfilename)
-        for t in set(postcheck):
-            print u'  {0}'.format(unicode(mt.parse(t.encode('utf-8')), 'utf-8'))
-    else:
-        ucom = raw_input(u'continue? (y, n) ').strip()
-        if ucom != u'y':
-            break
 
 
