@@ -33,21 +33,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="mydic.csv" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/mydic.csv">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="72">
-              <caret line="63" column="41" selection-start-line="63" selection-start-column="41" selection-end-line="63" selection-end-column="41" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="katakana.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="katakana.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/lputils/ja/katakana.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="192">
-              <caret line="16" column="2" selection-start-line="16" selection-start-column="2" selection-end-line="16" selection-end-column="2" />
+            <state relative-caret-position="216">
+              <caret line="18" column="48" selection-start-line="18" selection-start-column="48" selection-end-line="18" selection-end-column="48" />
               <folding>
                 <element signature="e#24#61#0" expanded="true" />
               </folding>
@@ -74,6 +64,18 @@
               <caret line="155" column="13" selection-start-line="155" selection-start-column="13" selection-end-line="155" selection-end-column="13" />
               <folding>
                 <element signature="e#24#59#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="word4ipadict.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/word4ipadict.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="384">
+              <caret line="32" column="0" selection-start-line="32" selection-start-column="0" selection-end-line="32" selection-end-column="0" />
+              <folding>
+                <element signature="e#24#39#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -111,7 +113,6 @@
         <option value="$PROJECT_DIR$/lputils/SegmentList.py" />
         <option value="$PROJECT_DIR$/lputils/BilingualSegmentList.py" />
         <option value="$PROJECT_DIR$/lputils/segmentlist.py" />
-        <option value="$PROJECT_DIR$/myipadictest1.py" />
         <option value="$PROJECT_DIR$/prep_vasont.py" />
         <option value="$PROJECT_DIR$/lputils/japaneseverifier.py" />
         <option value="$PROJECT_DIR$/lputils/japanesekatakana.py" />
@@ -119,6 +120,8 @@
         <option value="$PROJECT_DIR$/prep_sep.py" />
         <option value="$PROJECT_DIR$/lputils/ja/katakana.py" />
         <option value="$PROJECT_DIR$/lputils/ja/verifier.py" />
+        <option value="$PROJECT_DIR$/myipadictest1.py" />
+        <option value="$PROJECT_DIR$/word4ipadict.py" />
       </list>
     </option>
   </component>
@@ -259,7 +262,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="lexicord" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/myipadictest1.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/word4ipadict.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
@@ -484,9 +487,9 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="238" y="92" width="1170" height="770" extended-state="0" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15665796" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15665796" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.47931525" sideWeight="0.5068376" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32890856" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -540,11 +543,13 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/myipadictest1.py">
+    <entry file="file://$PROJECT_DIR$/word4ipadict.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="60">
           <caret line="9" column="88" selection-start-line="9" selection-start-column="14" selection-end-line="9" selection-end-column="88" />
-          <folding />
+          <folding>
+            <element signature="e#24#39#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -716,14 +721,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/myipadictest1.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="48">
-          <caret line="4" column="24" selection-start-line="4" selection-start-column="24" selection-end-line="4" selection-end-column="24" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/lexicord.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="120">
@@ -760,14 +757,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/mydic.csv">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="72">
-          <caret line="63" column="41" selection-start-line="63" selection-start-column="41" selection-end-line="63" selection-end-column="41" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/prep_sep.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="132">
@@ -775,6 +764,24 @@
           <folding>
             <element signature="e#24#76#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lputils/ja/katakana.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="216">
+          <caret line="18" column="48" selection-start-line="18" selection-start-column="48" selection-end-line="18" selection-end-column="48" />
+          <folding>
+            <element signature="e#24#61#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mydic.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="72">
+          <caret line="63" column="41" selection-start-line="63" selection-start-column="41" selection-end-line="63" selection-end-column="41" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -788,12 +795,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lputils/ja/katakana.py">
+    <entry file="file://$PROJECT_DIR$/word4ipadict.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="192">
-          <caret line="16" column="2" selection-start-line="16" selection-start-column="2" selection-end-line="16" selection-end-column="2" />
+        <state relative-caret-position="384">
+          <caret line="32" column="0" selection-start-line="32" selection-start-column="0" selection-end-line="32" selection-end-column="0" />
           <folding>
-            <element signature="e#24#61#0" expanded="true" />
+            <element signature="e#24#39#0" expanded="true" />
           </folding>
         </state>
       </provider>

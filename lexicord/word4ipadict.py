@@ -1,38 +1,47 @@
 # -*- coding: utf-8 -*-
+import argparse
+import os.path
 import subprocess
 import codecs
 import re
 from lputils.segmentlist import BilingualSegmentList
 import MeCab
 
-tmx_filename = r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/samples/SEP.tmx'
-tmx_encoding = 'utf-16'
-csv_filename = r'/Users/kiyoshi_izumi/Desktop/DATA/DEV/MyGitHub/MyDev/lexicord/mydic.csv'
-dic_filename = r'/Users/kiyoshi_izumi/Desktop/DATA/DEV/MyGitHub/MyDev/lexicord/mydic.dic'
-index_command = r'/usr/local/libexec/mecab/mecab-dict-index'
-exclude_ascii = True
+parser = argparse.ArgumentParser(description='Look up long words in TMX and maintain your IPA user dictionary.')
+parser.add_argument('--tmx', '-t', required=True, action='store', type=str, help='a TMX file')
+parser.add_argument('--encoding', '-e', action='store', type=str, default='utf-16', help='TMX file\'s encoding')
+parser.add_argument('--dict', '-d', action='store', type=str, help='your IPA user dictionary file')
+parser.add_argument('--csv', '-c', action='store', type=str, help='your user dictionary\'s intermediate csv file')
+parser.add_argument('--index', '-i', action='store', type=str, help='mecab-dict-index command path')
+parser.add_argument('--noascii', action='store_true', default=False,
+                    help='pick up words consisting of non-ascii characters only')
+args = parser.parse_args()
 
-bsl = BilingualSegmentList().read(format='tmx', name=tmx_filename, encoding='utf-16', verbose=True)
+bsl = BilingualSegmentList().read(format='tmx', name=args.tmx, encoding=args.encoding, verbose=True)
 bsl.trim()
 bsl.duplicate(where='both', uniq=True)
 
-with codecs.open(csv_filename, 'r', encoding='utf-8') as f:
-    entries = [line.strip().split(',') for line in f]
-user_words = {items[0]: items for items in entries}
+if os.path.exists(args.csv):
+    with codecs.open(args.csv, 'r', encoding='utf-8') as f:
+        entries = [line.strip().split(',') for line in f]
+    user_words = {items[0]: items for items in entries}
+else:
+    user_words = {}
 
-tagger = MeCab.Tagger('-Owakati -u %s' % dic_filename)
+tagger = MeCab.Tagger('-Owakati -u %s' % args.dict)
+
 
 def update_userdic():
     global user_words
-    with codecs.open(csv_filename, 'w', encoding='utf-8') as f:
+    with codecs.open(args.csv, 'w', encoding='utf-8') as f:
         for word in sorted(user_words.keys()):
             f.write(','.join(user_words[word]) + u'\n')
     p = subprocess.Popen(u'{0} -d /usr/local/lib/mecab/dic/ipadic -u {1} -f utf-8 -t utf-8 {2}'.format(
-        index_command, dic_filename, csv_filename), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        args.index, args.dict, args.csv), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     comout, comerr = p.communicate()
     print comout
     print comerr
-    return MeCab.Tagger('-Owakati -u %s' % dic_filename)
+    return MeCab.Tagger('-Owakati -u %s' % args.dict)
 
 
 def uinput(prompt):
@@ -42,10 +51,10 @@ def uinput(prompt):
 while True:
     loop = None
     tokens = []
-    for i, (_, t) in enumerate(bsl):
+    for i, (s, t) in enumerate(bsl):
         tokens += unicode(tagger.parse(t.encode('utf-8')), 'utf-8').split()
     longest = sorted(set(tokens), key=lambda x: len(x), reverse=True)
-    if exclude_ascii:
+    if args.noascii:
         longest = [w for w in longest if not all(ord(c) < 256 for c in w)]
 
     ix = 0
