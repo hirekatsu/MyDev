@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from local_settings import myenv
 from lputils.segmentlist import BilingualSegmentList
 import re
 import HTMLParser
@@ -13,8 +14,7 @@ def htmldecode(text):
     return text
 
 bsl = BilingualSegmentList()
-_ = bsl.read(format='tmx', name=r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/samples/SEP.tmx',
-             encoding='utf-16', verbose=True, metatextparser=htmldecode)
+_ = bsl.read(format='tmx', name=myenv.tmxS, encoding='utf-16', verbose=True, metatextparser=htmldecode)
 
 bsl.replace(u'\u2028', u' ')
 bsl.replace(u'\u3000', u' ')
@@ -193,7 +193,7 @@ print len(bsl)
 import nltk
 import MeCab
 
-mtagger = MeCab.Tagger('-Owakati -u /Users/kiyoshi_izumi/Desktop/DATA/DEV/MyGitHub/MyDev/lexicord/mydic.dic')
+mtagger = MeCab.Tagger('-Owakati -u %s' % myenv.projfile('mydic.dic'))
 
 def sourcetokenize(text):
     return u' '.join(nltk.word_tokenize(text))
@@ -203,7 +203,7 @@ def targettokenize(text):
 
 bsl.tokenize(sourcetokenize, targettokenize)
 bsl.moses_escape()
-bsl.moses_truecase(where='source', source_model_name=r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/samples/SEP.truecasemodel.en')
+bsl.moses_truecase(where='source', source_model_name=myenv.tmxS+'.truecasemodel.en')
 
 import random
 random.shuffle(bsl)
@@ -212,12 +212,9 @@ trnmax = int(1.0 * len(bsl) * 0.9)
 tunmax = int(1.0 * len(bsl) * 0.95)
 training = bsl[:trnmax]
 training.cutoff()
-training.writetext(r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/samples/SEP.trn.en',
-                   r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/samples/SEP.trn.ja',
+training.writetext(myenv.tmxS+'.trn.en', myenv.tmxS+'.trn.ja',
                    sourceencoding='utf-8', targetencoding='utf-8')
-bsl[trnmax:tunmax].writetext(r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/samples/SEP.tun.en',
-                             r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/samples/SEP.tun.ja',
+bsl[trnmax:tunmax].writetext(myenv.tmxS+'.tun.en', myenv.tmxS+'.tun.ja',
                              sourceencoding='utf-8', targetencoding='utf-8')
-bsl[tunmax:].writetext(r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/samples/SEP.eva.en',
-                       r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/samples/SEP.eva.ja',
+bsl[tunmax:].writetext(myenv.tmxS+'.eva.en', myenv.tmxS+'.eva.ja',
                        sourceencoding='utf-8', targetencoding='utf-8',)

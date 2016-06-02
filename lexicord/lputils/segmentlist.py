@@ -459,9 +459,9 @@ class BilingualSegmentList(list):
 
 if __name__ == '__main__':
     from unicodeprint import unicodeprint
+    from local_settings import myenv
     bslist = BilingualSegmentList()
-    bslist.read(format='tmx', name=r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/vasont.tmx',
-                encoding='utf-8', verbose=True)
+    bslist.read(format='tmx', name=myenv.tmxV, encoding='utf-8', verbose=True)
     print(len(bslist))
     subset = bslist[100:110]
     print(type(subset))
@@ -481,11 +481,5 @@ if __name__ == '__main__':
     print('tokenizing...')
     bslist.tokenize(sourcetokenizer=lambda x: ' '.join(nltk.word_tokenize(x)), targettokenizer=None)
     bslist.moses_escape()
-    bslist.write_text(sourcename=r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/vasont.aaa0.en',
-                      targetname=r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/vasont.aaa.ja',
-                      sourceencoding='utf8', targetencoding='utf8')
     print('truecasing...')
     bslist.moses_truecase(where='source')
-    bslist.write_text(sourcename=r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/vasont.aaa1.en',
-                      targetname=r'/Users/kiyoshi_izumi/Desktop/DATA/PROJ/MT/160427_nltk/vasont.aaa.ja',
-                      sourceencoding='utf8', targetencoding='utf8')
