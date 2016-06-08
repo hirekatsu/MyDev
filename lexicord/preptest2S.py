@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from local_settings import myenv
-from lputils.segmentlist import BilingualSegmentList
+from lputils.seglist import BiSegList
 import re
 import HTMLParser
 from lputils.unicodeprint import unicodeprint as up
@@ -13,7 +13,7 @@ def htmldecode(text):
     text = html_parser.unescape(text)
     return text
 
-bsl = BilingualSegmentList()
+bsl = BiSegList()
 _ = bsl.read(format='tmx', name=myenv.tmxS, encoding='utf-16', verbose=True, metatextparser=htmldecode)
 
 bsl.replace(u'\u2028', u' ')
@@ -63,17 +63,17 @@ bsl.replace(u'ビューアー', u'ビューア', where='target')
 bsl.replace(u'ブロッカー', u'ブロッカ', where='target')
 bsl.replace(u'メモリー', u'メモリ', where='target')
 bsl.replace(u'ワーカスレッド', u'ワーカースレッド', where='target')
-bsl.replace_re(ur'カスタマ(?!ー)', u'カスタマー', where='target')
-bsl.replace_re(ur'クエリ(?!ー)', u'クエリー', where='target')
-bsl.replace_re(ur'サーバ(?!ー)', u'サーバー', where='target')
-bsl.replace_re(ur'トポロジ(?!ー)', u'トポロジー', where='target')
-bsl.replace_re(ur'ファイバ(?!ー)', u'ファイバー', where='target')
-bsl.replace_re(ur'ヘッダ(?!ー)', u'ヘッダー', where='target')
-bsl.replace_re(ur'ベンダ(?!ー)', u'ベンダー', where='target')
-bsl.replace_re(ur'マスタ(?!ー)', u'マスター', where='target')
-bsl.replace_re(ur'メンバ(?!ー)', u'メンバー', where='target')
-bsl.replace_re(ur'ユーザ(?!ー)', u'ユーザー', where='target')
-bsl.replace_re(ur'ルータ(?!ー)', u'ルーター', where='target')
+bsl.rereplace(ur'カスタマ(?!ー)', u'カスタマー', where='target')
+bsl.rereplace(ur'クエリ(?!ー)', u'クエリー', where='target')
+bsl.rereplace(ur'サーバ(?!ー)', u'サーバー', where='target')
+bsl.rereplace(ur'トポロジ(?!ー)', u'トポロジー', where='target')
+bsl.rereplace(ur'ファイバ(?!ー)', u'ファイバー', where='target')
+bsl.rereplace(ur'ヘッダ(?!ー)', u'ヘッダー', where='target')
+bsl.rereplace(ur'ベンダ(?!ー)', u'ベンダー', where='target')
+bsl.rereplace(ur'マスタ(?!ー)', u'マスター', where='target')
+bsl.rereplace(ur'メンバ(?!ー)', u'メンバー', where='target')
+bsl.rereplace(ur'ユーザ(?!ー)', u'ユーザー', where='target')
+bsl.rereplace(ur'ルータ(?!ー)', u'ルーター', where='target')
 
 bsl.replace(u'ヶ月', u'カ月', where='target')
 bsl.replace(u'か月', u'カ月', where='target')
@@ -159,7 +159,7 @@ bsl.replace(u'書込み', u'書き込み', where='target')
 bsl.replace(u'書き込と', u'書き込みと', where='target')
 bsl.replace(u'切替える', u'切り替える', where='target')
 bsl.replace(u'支払済', u'支払い済', where='target')
-bsl.replace_re(ur'手続(?!き)', u'手続き', where='target')
+bsl.rereplace(ur'手続(?!き)', u'手続き', where='target')
 bsl.replace(u'問合せ', u'問い合わせ', where='target')
 bsl.replace(u'問い合せ', u'問い合わせ', where='target')
 bsl.replace(u'取入れ', u'取り入れ', where='target')
@@ -173,21 +173,21 @@ bsl.replace(u'読み込ために', u'読み込むために', where='target')
 bsl.replace(u'読取る', u'読み取る', where='target')
 bsl.replace(u'割当て', u'割り当て', where='target')
 
-bsl.prune_re(ur'[\u0081\u00BB\u00FB\u2022\u25BC]')
-bsl.prune(u'ＭＳ Ｐゴシック', where='target')
+bsl.prune(bsl.research(ur'[\u0081\u00BB\u00FB\u2022\u25BC]'))
+bsl.prune(bsl.search(u'ＭＳ Ｐゴシック', where='target'))
 bsl.trim()
-bsl.prune_re(ur'\\tCtrl\+[0-9A-Z]$', where='target')
-bsl.prune_re(ur'\([0-9A-Z]\)(\.\.\.)?$', where='target')
-bsl.prune_re(ur'\|[0-9A-Z]\|?$', where='source')
-bsl.prune_re(ur'^Usage:', where='source', flags=re.I)
-bsl.prune_re(ur'\\n$', where='source')
-bsl.prune_re(ur'\\n\\n', where='source')
-bsl.prune_re(ur'^IdxYomi=', where='source')
-bsl.prune(u'abcdefghijklmnopqrstuvwxyz', where='target')
+bsl.prune(bsl.research(ur'\\tCtrl\+[0-9A-Z]$', where='target'))
+bsl.prune(bsl.research(ur'\([0-9A-Z]\)(\.\.\.)?$', where='target'))
+bsl.prune(bsl.research(ur'\|[0-9A-Z]\|?$', where='source'))
+bsl.prune(bsl.research(ur'^Usage:', where='source', flags=re.I))
+bsl.prune(bsl.research(ur'\\n$', where='source'))
+bsl.prune(bsl.research(ur'\\n\\n', where='source'))
+bsl.prune(bsl.research(ur'^IdxYomi=', where='source'))
+bsl.prune(bsl.search(u'abcdefghijklmnopqrstuvwxyz', where='target'))
 
 bsl.trim()
-bsl.empty(prune=True)
-bsl.duplicate(where='both', uniq=True)
+bsl.prune(bsl.empty())
+bsl.duprune(bsl.duplicate(where='both'))
 print len(bsl)
 
 import nltk
@@ -212,9 +212,6 @@ trnmax = int(1.0 * len(bsl) * 0.9)
 tunmax = int(1.0 * len(bsl) * 0.95)
 training = bsl[:trnmax]
 training.cutoff()
-training.writetext(myenv.tmxS+'.trn.en', myenv.tmxS+'.trn.ja',
-                   sourceencoding='utf-8', targetencoding='utf-8')
-bsl[trnmax:tunmax].writetext(myenv.tmxS+'.tun.en', myenv.tmxS+'.tun.ja',
-                             sourceencoding='utf-8', targetencoding='utf-8')
-bsl[tunmax:].writetext(myenv.tmxS+'.eva.en', myenv.tmxS+'.eva.ja',
-                       sourceencoding='utf-8', targetencoding='utf-8',)
+training.write(format='text', name=(myenv.tmxS+'.trn.en', myenv.tmxS+'.trn.ja'), encoding='utf-8')
+bsl[trnmax:tunmax].writetext(format='text', name=(myenv.tmxS+'.tun.en', myenv.tmxS+'.tun.ja'), encoding='utf-8')
+bsl[tunmax:].writetext(format='text', name=(myenv.tmxS+'.eva.en', myenv.tmxS+'.eva.ja'), encoding='utf-8')

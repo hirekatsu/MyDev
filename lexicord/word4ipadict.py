@@ -4,7 +4,7 @@ import os.path
 import subprocess
 import codecs
 import re
-from lputils.segmentlist import BilingualSegmentList
+from lputils.seglist import BiSegList
 import MeCab
 
 parser = argparse.ArgumentParser(description='Look up long words in TMX and maintain your IPA user dictionary.')
@@ -17,7 +17,7 @@ parser.add_argument('--noascii', action='store_true', default=False,
                     help='pick up words consisting of non-ascii characters only')
 args = parser.parse_args()
 
-bsl = BilingualSegmentList().read(format='tmx', name=args.tmx, encoding=args.encoding, verbose=True)
+bsl = BiSegList().read(format='tmx', name=args.tmx, encoding=args.encoding, verbose=True)
 bsl.trim()
 bsl.duplicate(where='both', uniq=True)
 
@@ -45,7 +45,7 @@ def update_userdic():
 
 
 def uinput(prompt):
-    return unicode(raw_input(prompt).strip(), 'utf-8')
+    return unicode(raw_input(prompt.encode('utf-8')).strip(), 'utf-8')
 
 
 while True:
@@ -61,14 +61,14 @@ while True:
     while True:
         for i, t in enumerate(longest[ix:ix+20]):
             print u'{0: >3}: {1} ({2})'.format(i + ix, t, len(t))
-        userinput = raw_input(u'action (l|N|q)? ').strip()
+        userinput = uinput(u'action (l|N|q)? ')
         if userinput == u'l':
             ix += 20
             continue
         if userinput == u'q':
             loop = 'break'
             break
-        if not re.match(r'^\d+$', userinput):
+        if not re.match(ur'^\d+$', userinput):
             print u'UNKNOWN ACTION'
             continue
         i = int(userinput)
@@ -91,16 +91,23 @@ while True:
                 continue
             if re.match(ur'^e [^\s,]', userinput):
                 _, items = userinput.split(' ', 1)
-                items = [item.strip() for item in items.split(',', 3)]
-                items = (items + ['', '', ''])[:4]
-                if raw_input(u'adding {0} (y|n)? '.format(items[0])).strip() != u'y':
+                items = [item.strip() for item in items.split(u',', 3)]
+                items = (items + [u'', u'', u''])[:4]
+                if items[0] in user_words:
+                    print u'{} is already in dictionary'.format(item[0])
+                    continue
+                if uinput(u'adding {0} (y|n)? '.format(items[0])) != u'y':
                     continue
                 word = items[0]
                 word_props = map(lambda x: x if x else word, items[1:])
             elif re.match(ur'^\d+:\d+$', userinput):
-                (start, end) = userinput.split(':')
+                (start, end) = userinput.split(u':')
                 word = t[int(start):int(end)]
-                if raw_input(u'adding {0} (y|n)? '.format(word)).strip() != u'y':
+                print word
+                if word in user_words:
+                    print u'{} is already in dictionary'.format(word)
+                    continue
+                if uinput(u'adding {0} (y|n)? '.format(word)) != u'y':
                     continue
                 word_props = [word, word, word]
             else:
@@ -113,10 +120,12 @@ while True:
             for word in pending_words:
                 if word not in user_words:
                     user_words[word] = [word, u'', u'', u'1', u'名詞', u'一般', u'*', u'*', u'*', u'*',
-                                        word_props[0], word_props[1], word_props[2]]
+                                        pending_words[word][0], pending_words[word][1], pending_words[word][2]]
+                else:
+                    del pending_words[word]
             tagger = update_userdic()
             print u'verifying... {0}'.format(unicode(tagger.parse(t.encode('utf-8')), 'utf-8'))
-            if raw_input(u'the result is okay (y|n)? ').strip() != u'y':
+            if uinput(u'the result is okay (y|n)? ') != u'y':
                 for word in pending_words:
                     del user_words[word]
                 tagger = update_userdic()

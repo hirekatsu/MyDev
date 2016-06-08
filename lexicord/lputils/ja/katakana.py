@@ -20,31 +20,24 @@ class Katakana(object):
 
     def __init__(self):
         self._dict = defaultdict(lambda: defaultdict(int))
-        self._most = dict()
+        self._best = None
 
     def train(self, sents):
         self._dict = self._build_dict(sents)
-        self._most = {k: sorted(self._dict[k].items(), reverse=True, key=lambda x: x[1])[0][0] for k in self._dict}
+        self._best = None
         return self
 
-    def add_to_dict(self, token):
+    def train_by_token(self, token):
         for word in Katakana.re_obj.findall(token):
-            key = Katakana._normalize(word)
-            self._dict[key][word] += 1
-            self._most[key] = sorted(self._dict[key].items(), reverse=True, key=lambda x: x[1])[0][0]
+            self._dict[Katakana._normalize(word)][word] += 1
+        self._best = None
 
-    def inconsistency(self):
+    def inconsistent(self):
         return [sorted(self._dict[k].items(), reverse=True, key=lambda x: x[1]) for k in sorted(self._dict) if len(self._dict[k]) > 1]
 
-    def notational(self, sents, use_most_frequent=False):
-        breaches = dict()
-        for sent in sents:
-            for w in self.notational_sent(sent, use_most_frequent=use_most_frequent):
-                breaches[w] = 1
-        return sorted(breaches)
-
-    def notational_sent(self, sent, use_most_frequent=False):
+    def notational(self, sent, use_most_frequent=False):
         assert isinstance(sent, basestring) or hasattr(sent, '__iter__'), 'Unexpected type of sentence'
+        self._build_best()
         breaches = dict()
         tokens = sent.split() if isinstance(sent, basestring) else sent
         for token in tokens:
@@ -54,30 +47,32 @@ class Katakana(object):
                     if word not in self._dict[key]:
                         breaches[word] = 1
                     elif use_most_frequent:
-                        if word != self._most[key]:
+                        if word != self._best[key]:
                             breaches[word] = 1
         return sorted(breaches)
 
     @staticmethod
-    def impossible(sents):
-        breaches = dict()
-        for sent in sents:
-            for w in Katakana.impossible_sent(sent):
-                breaches[w] = 1
-        return sorted(breaches)
-
-    @staticmethod
-    def impossible_sent(sent):
+    def impossible(sent):
         breaches = dict()
         assert isinstance(sent, basestring) or hasattr(sent, '__iter__'), 'Unexpected type in list of sentences'
         tokens = sent.split() if isinstance(sent, basestring) else sent
         for token in tokens:
             for word in Katakana.re_obj.findall(token):
-                if re.match(ur'^[%sー]' % Katakana.chars_small, word):
-                    breaches[word] = 1
-                elif any(p in word for p in (u'ーー', u'ッー')):
+                if not Katakana.ispossible(word):
                     breaches[word] = 1
         return sorted(breaches)
+
+    @staticmethod
+    def ispossible(kword):
+        if re.match(ur'^[%sー]' % Katakana.chars_small, kword):
+            return False
+        elif u'ーー' in kword:
+            return False
+        elif re.match(ur'[ヵヶッ]ー', kword):
+            return False
+        elif re.match(ur'[ァィゥェォヵヶッャュョ][ァィゥェォヵヶャュョ]'):
+            return False
+        return True
 
     @staticmethod
     def _build_dict(sents):
@@ -90,6 +85,10 @@ class Katakana(object):
                     kdict[Katakana._normalize(word)][word] += 1
         return kdict
 
+    def _build_best(self):
+        if self._best is None:
+            self._best = {k: sorted(self._dict[k].items(), reverse=True, key=lambda x: x[1])[0][0] for k in self._dict}
+
     @staticmethod
     def _normalize(text):
         t = text
@@ -98,7 +97,6 @@ class Katakana(object):
         # ウイルス/ウィルス、ウオッカ/ウォッカ
         t = re.sub(ur'(ウア|ウァ)', u'Ｗア', t)
         t = re.sub(ur'(ウイ|ウィ)', u'Ｗイ', t)
-        t = re.sub(ur'(ウウ|ウゥ)', u'Ｗウ', t)
         t = re.sub(ur'(ウエ|ウェ)', u'Ｗエ', t)
         t = re.sub(ur'(ウオ|ウォ)', u'Ｗオ', t)
         # スマートホン/スマートフォン
@@ -110,9 +108,9 @@ class Katakana(object):
         # バイオリン/ヴァイオリン、ボイス/ヴォイス
         t = re.sub(ur'(バ|ヴァ)', u'Ｂア', t)
         t = re.sub(ur'(ビ|ヴィ)', u'Ｂイ', t)
-        t = re.sub(ur'(ブ|ヴゥ)', u'Ｂウ', t)
         t = re.sub(ur'(ベ|ヴェ)', u'Ｂエ', t)
         t = re.sub(ur'(ボ|ヴォ)', u'Ｂオ', t)
+        t = re.sub(ur'(ブ|ヴ)', u'Ｂウ', t)
         # クオリティ/クォリティ
         t = re.sub(ur'(クア|クァ)', u'Ｑア', t)
         t = re.sub(ur'(クイ|クィ)', u'Ｑイ', t)
@@ -122,7 +120,7 @@ class Katakana(object):
         # イニシアチブ/イニシアティブ
         t = re.sub(ur'(チ|ティ)', u'Ｔイ', t)
         t = re.sub(ur'(ヂ|ディ)', u'Ｄイ', t)
-        # サプライヤ/サプライア, リニヤ/リニア
+        # サプライヤ/サプライア, リニヤ/リニア, ダイヤル/ダイアル
         t = re.sub(ur'(?<=[%s])[アヤ]' % Katakana.chars_i, u'Ｉア', t)
         # プリンター/プリンタァ/プリンタア > プリンタ〜, ダージリン/ダアジリン/ダァジリン > ダ〜ジリン
         t = re.sub(ur'(?<=[%s])[ーアァ]' % Katakana.chars_a, u'〜', t)
@@ -178,22 +176,22 @@ if __name__ == '__main__':
             print(u'{0} ({1})'.format(w, f), end=u', ')
         print()
     print(u'-' * 50)
-    for klist in kata.inconsistency():
+    for klist in kata.inconsistent():
         for w, f in klist:
             print(u'{0} ({1})'.format(w, f), end=u', ')
         print()
     print(u'-' * 50)
-    for breach in kata.notational_sent(u'ユーザー と ユーザ'):
+    for breach in kata.notational(u'ユーザー と ユーザ'):
         print(breach)
     print(u'-' * 50)
-    for breach in kata.notational_sent(u'ユーザー と ユーザ', use_most_frequent=True):
+    for breach in kata.notational(u'ユーザー と ユーザ', use_most_frequent=True):
         print(breach)
     print(u'-' * 50)
-    for breach in kata.notational(sentences2, use_most_frequent=True):
+    for breach in sorted(set(reduce(lambda x, y: x+y, (kata.notational(sent, use_most_frequent=True) for sent in sentences2)))):
         print(breach, end=u', ')
     print()
     print(u'-' * 50)
-    for breach in kata.impossible(sentences2):
+    for breach in sorted(set(reduce(lambda x, y: x+y, (kata.impossible(sent) for sent in sentences2)))):
         print(breach, end=u', ')
 
 
