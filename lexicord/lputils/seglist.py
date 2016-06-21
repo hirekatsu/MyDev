@@ -210,6 +210,10 @@ class BiSegList(list):
         return element
 
     @staticmethod
+    def _htmlencode(t):
+        return t.replace(u'&', u'&amp;').replace(u"'", u'&apos;').replace(u'"', u'&quot;').replace(u'<', u'&lt;').replace(u'>', u'&gt;')
+
+    @staticmethod
     def _wh(key, target):
         return key in (target, 'both', 'any')
 
@@ -381,7 +385,7 @@ class BiSegList(list):
                                    sourceencoding=encoding[0], targetencoding=encoding[1], **kwargs)
         elif format == 'tabbed':
             assert isinstance(name, basestring), 'Parameter: name is NOT a string'
-            return self._read_tabbed(name, encoding, **kwargs)
+            return self._read_tabbed(name, encoding=encoding, **kwargs)
         elif format == 'tmx':
             assert isinstance(name, basestring), 'Parameter: name is NOT a string'
             return self._read_tmx(name, encoding=encoding, **kwargs)
@@ -403,7 +407,13 @@ class BiSegList(list):
                                     sourceencoding=encoding[0], targetencoding=encoding[1], **kwargs)
         elif format == 'tabbed':
             assert isinstance(name, basestring), 'Parameter: name is NOT a string'
-            return self._write_tabbed(name, encoding, **kwargs)
+            return self._write_tabbed(name, encoding=encoding, **kwargs)
+        elif format == 'tmx':
+            assert isinstance(name, basestring), 'Parameter: name is NOT a string'
+            return self._write_tmx(name, encoding=encoding, **kwargs)
+        elif format == 'xliff':
+            assert isinstance(name, basestring), 'Parameter: name is NOT a string'
+            return self._write_xliff(name, encoding=encoding, **kwargs)
         else:
             raise Exception('Unknown file format: ' + format)
 
@@ -450,18 +460,17 @@ class BiSegList(list):
             metatextparser = lambda x: x
         with codecs.open(name, 'w', encoding=encoding) as f:
             for s, t in self:
-                f.write(s + u'\t' + t + u'\n')
+                f.write(metatextparser(s) + u'\t' + metatextparser(t) + u'\n')
 
-    def _read_tmx(self, name, encoding=sys.getdefaultencoding(),
-                  lang=(u'<UNKNOWN0>', u'<UNKNOWN1>'),
+    def _read_tmx(self, name, lang=(u'<UNKNOWN0>', u'<UNKNOWN1>'), encoding=sys.getdefaultencoding(),
                   metatextparser=None,
                   progresscallback=None,
                   verbose=False):
         """
         (Private method) Read segment text from a TMX file and append the current segment list.
         :param name: Filename
-        :param encoding:
         :param lang:
+        :param encoding:
         :param metatextparser:
         :param progresscallback:
         :param verbose:
@@ -495,8 +504,8 @@ class BiSegList(list):
                             m = re.search(ur'<seg(?:\s[^>]*)?>(.*?)</seg>', TUV[1], re.I + re.U + re.S + re.M)
                             if m:
                                 text = m.group(1).strip(u'\r\n')
-                                text = re.sub(ur'<ph(?:\s[^>]*)?>(.*?)</ph>', '', text, re.I + re.U + re.S + re.M)
-                                text = re.sub(ur'<ut>(.*)</ut>', '', text, re.I + re.U + re.S + re.M)
+                                text = re.sub(ur'<ph(?:\s[^>]*)?>(.*?)</ph>', ur'\1', text, re.I + re.U + re.S + re.M)
+                                text = re.sub(ur'<ut>(.*)</ut>', ur'\1', text, re.I + re.U + re.S + re.M)
                                 text = htmlparser.unescape(text)
                                 if metatextparser:
                                     text = metatextparser(text)
@@ -517,6 +526,50 @@ class BiSegList(list):
             print('\r100%', '*' * 20)
         return self
 
+    def _write_tmx(self, name, lang, encoding=sys.getdefaultencoding(),
+                   metatextparser=None,
+                   progresscallback=None,
+                   verbose=False):
+        from datetime import datetime
+        from pytz import timezone
+
+        if metatextparser is None:
+            metatextparser = lambda x: x
+
+        lastprogressat = time.time()
+
+        with codecs.open(name, 'w', encoding=encoding) as f:
+            f.write(u'''<?xml version="1.0" encoding="{}"?>
+<tmx version="1.4">
+<header creationtool="py script" creationtoolversion="1.0" segtype="sentence" adminlang="EN" srclang="{}" datatype="" o-encoding="" creationdate="{}Z"></header>
+<body>
+'''.format(encoding, lang[0], datetime.now(timezone('UTC')).strftime(u'%Y%m%dT%H%M%S')))
+
+            for i, (s, t) in enumerate(self):
+                f.write(u'''<tu>
+<tuv xml:lang="{}">
+<seg>{}</seg>
+</tuv>
+'''.format(lang[0], self._htmlencode(metatextparser(s))))
+                f.write(u'''<tuv xml:lang="{}">
+<seg>{}</seg>
+</tuv>
+</tu>
+'''.format(lang[1], self._htmlencode(metatextparser(t))))
+                if time.time() - lastprogressat > 1.0:
+                    rate = float(i) / len(self)
+                    if verbose:
+                        print('\r{:>3d}%'.format(int(rate * 100)), '*' * int(rate * 20), end=' ')
+                    if progresscallback:
+                        progresscallback(rate)
+                    lastprogressat = time.time()
+            f.write(u'''</body>
+</tmx>
+''')
+        if verbose:
+            print('\r100%', '*' * 20)
+        return self
+
     def _read_xliff(self, name, encoding=sys.getdefaultencoding(), metatextparser=None):
         assert os.path.exists(name), 'XLIFF file does not exist.'
         with codecs.open(name, 'r', encoding=encoding) as f:
@@ -529,15 +582,39 @@ class BiSegList(list):
                 tu = re.search(ur'<xlf:target(?:\s[^>]*)?>(.*?)</xlf:target>', TU, re.I + re.U + re.S + re.M)
                 if su and tu:
                     stext = su.group(1).strip(u'\r\n')
+                    stext = re.sub(ur'<ph(?:\s[^>]*)?>(.*?)</ph>', ur'\1', stext, re.I + re.U + re.S + re.M)
                     stext = htmlparser.unescape(stext)
                     if metatextparser:
                         stext = metatextparser(stext)
                     ttext = tu.group(1).strip(u'\r\n')
+                    ttext = re.sub(ur'<ph(?:\s[^>]*)?>(.*?)</ph>', ur'\1', ttext, re.I + re.U + re.S + re.M)
                     ttext = htmlparser.unescape(ttext)
                     if metatextparser:
                         ttext = metatextparser(ttext)
                     self.append((stext, ttext))
         return self
+
+    def _write_xliff(self, name, lang, encoding=sys.getdefaultencoding(),
+                     originalname='translate.txt', originaldatatype='plaintext',
+                     metatextparser=None):
+        if metatextparser is None:
+            metatextparser = lambda x: x
+        with codecs.open(name, 'w', encoding=encoding) as f:
+            f.write(u'''<?xml version="1.0" encoding="utf-8"?>
+<xlf:xliff xmlns:xlf="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+<xlf:file datatype="{}" original="{}" source-language="{}" target-language="{}">
+<xlf:body>
+'''.format(originaldatatype, originalname, lang[0], lang[1]))
+            for i, (s, t) in enumerate(self):
+                f.write(u'''<xlf:trans-unit id="{}">
+<xlf:source>{}</xlf:source>
+<xlf:target>{}</xlf:target>
+</xlf:trans-unit>
+'''.format(i, self._htmlencode(metatextparser(s)), self._htmlencode(metatextparser(t))))
+            f.write(u'''</xlf:body>
+</xlf:file>
+</xlf:xliff>
+''')
 
 if __name__ == '__main__':
     from local_settings import myenv

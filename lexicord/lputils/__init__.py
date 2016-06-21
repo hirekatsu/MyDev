@@ -55,3 +55,13 @@ def isstoptoken_ja(s):
         if __isstopword_ja(s[0]) or __isstopword_ja(s[-1]):
             return True
         return all(__isstopword_ja(t) for t in s)
+
+
+def sliceof(small, big):
+    for i in xrange(len(big)-len(small)+1):
+        for j in xrange(len(small)):
+            if big[i+j] != small[j]:
+                break
+        else:
+            return i, i+len(small)
+    return False
